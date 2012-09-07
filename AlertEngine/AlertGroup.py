@@ -134,22 +134,53 @@ class GroupInstance:
     def NextActionTime(self):
         return self.__nextAction
     
+    def __GetPreviousLevelRecipients(self, group):
+        return group.GetRecipients(self.__previousLevel)
+            
+    def __GetCurrentLevelRecipients(self, group):
+        return group.GetRecipients(self.__previousLevel)
+    
+    def __ShiftLevelForward(self, group):
+        if(group.GetSize() > self.__currentLevel + 1):
+            self.__nextAction = datetime.utcnow() + timedelta(minutes = group.GetEscalateTime(self.__currentLevel))
+            self.__previousLevel = self.__currentLevel
+            self.__currentLevel = self.__currentLevel + 1
+        else:
+            print 'Reached Max Level'
+            self.__nextAction = datetime.max
+            
+    def __SetNoAction(self):
+        self.__nextAction = datetime.max
+            
     def GetRecipients(self, alertType):
         recipients = []
         group = GroupInstance.__grpCache.GetGroup(self.__groupId)
-        if(group is not None):
-            if(group.ShouldSend(alertType)):
-                if(alertType == 'alert'):
-                    recipients.extend(group.GetRecipients(self.__currentLevel))
-                    #do maintenance to make sure it moves up a level etc
-                    if(group.GetSize() > self.__currentLevel + 1):
-                        self.__nextAction = datetime.utcnow() + timedelta(minutes = group.GetEscalateTime(self.__currentLevel))
-                        self.__previousLevel = self.__currentLevel
-                        self.__currentLevel = self.__currentLevel + 1
-                    else:
-                        print 'Reached Max Level'
-                        self.__nextAction = datetime.max
-                if(alertType == 'ack' or alertType == 'suppress'):
-                    recipients.extend(group.GetRecipients(self.__previousLevel))
-                    self.__nextAction = datetime.max
+        if(group.ShouldSend(alertType)):
+            if(group is not None):
+                if(alertType == 'alert' or alertType == 'escalate'):
+                    recipients.append(self.__GetCurrentLevelRecipients(group))
+                    self.__ShiftLevelForward(group)
+                if(alertType == 'ack' or alertType == 'suppress' or alertType == 'clear'):
+                    recipients.append(self.__GetPreviousLevelRecipients(group))
+                    self.__SetNoAction()
         return recipients
+    
+#    def GetRecipients(self, alertType):
+#        recipients = []
+#        group = GroupInstance.__grpCache.GetGroup(self.__groupId)
+#        if(group is not None):
+#            if(group.ShouldSend(alertType)):
+#                if(alertType == 'alert'):
+#                    recipients.extend(group.GetRecipients(self.__currentLevel))
+#                    #do maintenance to make sure it moves up a level etc
+#                    if(group.GetSize() > self.__currentLevel + 1):
+#                        self.__nextAction = datetime.utcnow() + timedelta(minutes = group.GetEscalateTime(self.__currentLevel))
+#                        self.__previousLevel = self.__currentLevel
+#                        self.__currentLevel = self.__currentLevel + 1
+#                    else:
+#                        print 'Reached Max Level'
+#                        self.__nextAction = datetime.max
+#                if(alertType == 'ack' or alertType == 'suppress'):
+#                    recipients.extend(group.GetRecipients(self.__previousLevel))
+#                    self.__nextAction = datetime.max
+#        return recipients

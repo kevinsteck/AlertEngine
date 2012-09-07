@@ -6,9 +6,9 @@ Created on Aug 19, 2012
 from collections import deque
 from datetime import datetime
 from SimpleXMLRPCServer import SimpleXMLRPCServer
-from AlertEngine.ProcessItems import AlertItem, AckItem, SuppressItem, ClearItem
 from AlertEngine.AlertGroup import GroupInstance
-from AlertEngine.Client import ClientTest 
+from AlertEngine.Client import ClientTest
+from AlertEngine.ProcessItems import AlertItem, AckItem, SuppressItem, ClearItem
 import threading
 import time
 import smtplib
@@ -101,69 +101,7 @@ class AlertCoreThreader(threading.Thread):
             print 'Doing work'
             self.__alertCore.ProcessAlertState()
             time.sleep(5)
-            
-class AlertInstance:
-    def __init__(self, uniqueId, message, groupList, ttl):
-        self.__uniqueId = uniqueId
-        self.__message = message
-        self.__groupInstanceList = []
-        self.__ttl = ttl
-        self.__state = 'alert'
-        self.__nextAction = datetime.max
-        for g in groupList:
-            self.__groupInstanceList.append(GroupInstance(g))
-        self.__Send('alert')
-        #self.SetupSmtp(username, userPass, fromAddr, smtpServer, smtpPort)
-        
-    def __Send(self, alertType):
-        if(not (self.__state == 'ack' or self.__state == 'suppress')):
-            for g in self.__groupInstanceList:
-                recipients = g.GetRecipients(alertType)
-                print 'Would have sent to: ' + str(recipients)
-                #self.__SendMail(recipients, 'fill this in')
-                self.UpdateNextActionTime()
-                print 'Next action time: ' + str(self.__nextAction)
-        
-    def UpdateNextActionTime(self):
-        closestTime = datetime.max
-        for g in self.__groupInstanceList:
-            if(g.NextActionTime() < closestTime):
-                closestTime = g.NextActionTime()
-        self.__nextAction = closestTime
-        
-    def NextActionTime(self):
-        return self.__nextAction
-                
-    def SendAlert(self):
-        self.__Send('alert')
-        
-    def Ack(self):
-        self.__Send('ack')
-        self.__state = 'ack'
-    
-    def Suppress(self):
-        self.__Send('suppress')
-        self.__state = 'suppress'
-    
-    def Clear(self):
-        self.__Send('clear')
-            
-    def __SetupSmtp(self, username, userPass, fromAddr, smtpServer, smtpPort):
-        self.__username = username
-        self.__password = userPass
-        self.__fromAddr = fromAddr
-        self.__smtp = smtplib.SMTP(smtpServer, smtpPort)
 
-    def __SendMail(self, toAddr, msg):
-        self.smtp.ehlo()
-        self.smtp.starttls()
-        self.smtp.ehlo()
-        self.smtp.login(self.__username, self.__password)
-        self.smtp.sendmail(self.__fromAddr, toAddr, msg)
-        self.smtp.quit()     
-            
-
-            
 alertcoreThreader = AlertCoreThreader()
 alertcoreThreader.start()
 clientTest = ClientTest()
