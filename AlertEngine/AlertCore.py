@@ -6,7 +6,6 @@ Created on Aug 19, 2012
 from collections import deque
 from datetime import datetime
 from SimpleXMLRPCServer import SimpleXMLRPCServer
-from AlertEngine.AlertGroup import GroupInstance
 from AlertEngine.Client import ClientTest
 from AlertEngine.ProcessItems import AlertItem, AckItem, SuppressItem, ClearItem
 import threading
@@ -64,19 +63,17 @@ class AlertCore(threading.Thread):
     @staticmethod
     def ProcessAlertState():
         currentTime = datetime.utcnow()
-#        for a in AlertCore.__alertList.values():
-#            print a.NextActionTime()
         actionable = filter(lambda x: x.NextActionTime() < currentTime, AlertCore.__alertList.values())
         for a in actionable:
-            a.SendAlert()
+            a.SendEscalate()
         AlertCore.UpdateActionTime()
     
     @staticmethod
     def UpdateActionTime():
-        nextTime = datetime.max
+        NextTime = datetime.max
         for a in AlertCore.__alertList.values():
-            if(a.NextActionTime() < nextTime):
-                nextTime = a.NextActionTime()
+            if(a.NextActionTime() < NextTime):
+                NextTime = a.NextActionTime()
             
 class AlertCoreWorker(threading.Thread):
     def __init__(self, alertCore):
@@ -84,7 +81,6 @@ class AlertCoreWorker(threading.Thread):
         threading.Thread.__init__(self)
     def run(self):
         while True:
-            print 'Processing Action Queue'
             self.__Core.ProcessQueue()
             time.sleep(5)
 
@@ -98,7 +94,6 @@ class AlertCoreThreader(threading.Thread):
         self.__alertCore.start()
         self.__alertCoreWorker.start()
         while(True):
-            print 'Doing work'
             self.__alertCore.ProcessAlertState()
             time.sleep(5)
 

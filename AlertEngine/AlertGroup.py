@@ -50,7 +50,7 @@ class Group:
     def ShouldSend(self, alertType):
         if(alertType == 'alert'):
             return self.__shouldAlert
-        if(alertType == 'esclate'):
+        if(alertType == 'escalate'):
             return self.__shouldEscalate
         if(alertType == 'ack'):
             return self.__shouldAck
@@ -58,9 +58,11 @@ class Group:
             return self.__shouldEscalate
         if(alertType == 'clear'):
             return self.__shouldClear
+        
+        return False
     
 class Level:
-    #esclateTime in mins
+    #escalateTime in mins
     def __init__(self, escalateTime):
         self.__users = []
         self.__escalateTime = escalateTime
@@ -99,9 +101,9 @@ class GroupCache:
         self.__AddGroup(newGroup)
         #another test group
         newGroup1 = Group(2, True, True, True, True, True)
-        newGroup1.AddLevel(0, 'kevinsteck@gmail.com', 5)
-        newGroup1.AddLevel(1, 'kevinsteck@gmail.com', 5)
-        newGroup1.AddLevel(2, 'kevinsteck@gmail.com', 5)
+        newGroup1.AddLevel(0, 'kevinsteck@gmail.com', 2)
+        newGroup1.AddLevel(1, 'kevinsteck@gmail.com', 2)
+        newGroup1.AddLevel(2, 'kevinsteck@gmail.com', 2)
         self.__AddGroup(newGroup1)
         #another test
         newGroup1 = Group(3, True, True, True, True, True)
@@ -138,9 +140,10 @@ class GroupInstance:
         return group.GetRecipients(self.__previousLevel)
             
     def __GetCurrentLevelRecipients(self, group):
-        return group.GetRecipients(self.__previousLevel)
+        return group.GetRecipients(self.__currentLevel)
     
     def __ShiftLevelForward(self, group):
+        print "Shift Group Size: " + str(group.GetSize()) + " Current level: " + str(self.__currentLevel)
         if(group.GetSize() > self.__currentLevel + 1):
             self.__nextAction = datetime.utcnow() + timedelta(minutes = group.GetEscalateTime(self.__currentLevel))
             self.__previousLevel = self.__currentLevel
@@ -148,6 +151,8 @@ class GroupInstance:
         else:
             print 'Reached Max Level'
             self.__nextAction = datetime.max
+            
+        print 'Next action time: ' + str(self.__nextAction)
             
     def __SetNoAction(self):
         self.__nextAction = datetime.max
@@ -158,29 +163,9 @@ class GroupInstance:
         if(group.ShouldSend(alertType)):
             if(group is not None):
                 if(alertType == 'alert' or alertType == 'escalate'):
-                    recipients.append(self.__GetCurrentLevelRecipients(group))
+                    recipients.extend(self.__GetCurrentLevelRecipients(group))
                     self.__ShiftLevelForward(group)
                 if(alertType == 'ack' or alertType == 'suppress' or alertType == 'clear'):
-                    recipients.append(self.__GetPreviousLevelRecipients(group))
+                    recipients.extend(self.__GetPreviousLevelRecipients(group))
                     self.__SetNoAction()
         return recipients
-    
-#    def GetRecipients(self, alertType):
-#        recipients = []
-#        group = GroupInstance.__grpCache.GetGroup(self.__groupId)
-#        if(group is not None):
-#            if(group.ShouldSend(alertType)):
-#                if(alertType == 'alert'):
-#                    recipients.extend(group.GetRecipients(self.__currentLevel))
-#                    #do maintenance to make sure it moves up a level etc
-#                    if(group.GetSize() > self.__currentLevel + 1):
-#                        self.__nextAction = datetime.utcnow() + timedelta(minutes = group.GetEscalateTime(self.__currentLevel))
-#                        self.__previousLevel = self.__currentLevel
-#                        self.__currentLevel = self.__currentLevel + 1
-#                    else:
-#                        print 'Reached Max Level'
-#                        self.__nextAction = datetime.max
-#                if(alertType == 'ack' or alertType == 'suppress'):
-#                    recipients.extend(group.GetRecipients(self.__previousLevel))
-#                    self.__nextAction = datetime.max
-#        return recipients

@@ -17,8 +17,7 @@ class AlertInstance:
         self.__nextAction = datetime.max
         for g in groupList:
             self.__groupInstanceList.append(GroupInstance(g))
-        self.__Send('alert')
-        print 'Sent Alert?'
+        self.SendAlert()
         #self.SetupSmtp(username, userPass, fromAddr, smtpServer, smtpPort)
         
     def __GetActionableGroups(self):
@@ -29,28 +28,27 @@ class AlertInstance:
         return groups
         
     def __Send(self, alertType):
-        if(alertType == 'alert' ):
+        if(alertType == 'alert'):
             for g in self.__groupInstanceList:
                 recipients = g.GetRecipients(alertType)
-                print 'Would have sent to: ' + str(recipients)
+                print 'Alert: Would have sent to: ' + str(recipients)
                 #self.__SendMail(recipients, 'fill this in')
-                self.UpdateNextActionTime()
-                print 'Next action time: ' + str(self.__nextAction)
-        if(alertType == 'esclate'):
+            self.UpdateNextActionTime()
+        if(alertType == 'escalate'):
             groups = self.__GetActionableGroups()
             for g in groups:
                 recipients = g.GetRecipients(alertType)
-                print 'Would have sent to: ' + str(recipients)
-                #self.__SendMail(recipients, 'fill this in')
-                self.UpdateNextActionTime()
-                print 'Next action time: ' + str(self.__nextAction)
+                print 'Esclate: Would have sent to: ' + str(recipients)
+                #self.__SendMail(recipients, 'fill this in')              
+            self.UpdateNextActionTime()
         if(alertType == 'ack' or alertType == 'suppress' or alertType == 'clear'):
             for g in self.__groupInstanceList:
                 recipients = g.GetRecipients(alertType)
-                print 'Would have sent to: ' + str(recipients)
+                print 'Ack/Suppress/Clear: Would have sent to: ' + str(recipients)
                 #self.__SendMail(recipients, 'fill this in')
-                self.__nextAction = datetime.max
-                print 'Next action time: ' + str(self.__nextAction)
+            self.__nextAction = datetime.max
+        
+#        print 'Next action time: ' + str(self.__nextAction)
         
     def UpdateNextActionTime(self):
         closestTime = datetime.max
@@ -61,9 +59,13 @@ class AlertInstance:
         
     def NextActionTime(self):
         return self.__nextAction
+    
+    def SendEscalate(self):
+        self.__Send(self.__state)
                 
     def SendAlert(self):
         self.__Send('alert')
+        self.__state = 'escalate'
         
     def Ack(self):
         self.__Send('ack')
