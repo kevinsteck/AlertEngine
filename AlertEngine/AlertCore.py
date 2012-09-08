@@ -65,7 +65,6 @@ class AlertCore(threading.Thread):
     def ProcessAlertState():
         currentTime = datetime.utcnow()
         actionable = filter(lambda x: x.NextActionTime() < currentTime, AlertCore.__alertList.values())
-#        print 'Actionable items: ' + str(len(actionable))
         for a in actionable:
             a.SendNextEvent()
         AlertCore.UpdateActionTime()

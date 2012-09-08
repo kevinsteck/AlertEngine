@@ -15,6 +15,8 @@ class Group:
         self.__shouldAck = ack
         self.__shouldSuppress = suppress
         self.__shouldClear = clear
+        self.__timeProfiles = []
+        self.__holidayProfiles = []
         self.__levels = OrderedDict()
         
     def Id(self):
@@ -58,33 +60,8 @@ class Group:
             return self.__shouldEscalate
         if(alertType == 'clear'):
             return self.__shouldClear
-        
         return False
     
-class Level:
-    #escalateTime in mins
-    def __init__(self, escalateTime):
-        self.__users = []
-        self.__escalateTime = escalateTime
-
-    def AddUsers(self, users):
-        self.__users.append(users)
-        
-    def GetEscalateTime(self):
-        return self.__escalateTime
-        
-    def GetUsers(self):
-        return self.__users
-
-#not using this right now but will need to implement for better user types
-class User:
-    def __init__(self):
-        pass
-    def SendAlert(self, msg):
-        pass
-    def Send(self):
-        pass
-
 class GroupCache:
     __groupList = {}
     
@@ -121,13 +98,36 @@ class GroupCache:
         else:
             return None
     
+class Level:
+    #escalateTime in mins
+    def __init__(self, escalateTime):
+        self.__users = []
+        self.__escalateTime = escalateTime
+
+    def AddUsers(self, users):
+        self.__users.append(users)
+        
+    def GetEscalateTime(self):
+        return self.__escalateTime
+        
+    def GetUsers(self):
+        return self.__users
+
+#not using this right now but will need to implement for better user types
+class User:
+    def __init__(self):
+        pass
+    def SendAlert(self, msg):
+        pass
+    def Send(self):
+        pass
+    
 class GroupInstance:
     __grpCache = GroupCache()
     
     def __init__(self, groupId):
         self.__groupId = groupId
         self.__lastSentLevel = 0
-        self.__previousLevel = 0
         self.__currentLevel = 0
         self.__nextAction = datetime.max
         
@@ -139,9 +139,6 @@ class GroupInstance:
     
     def __GetLastLevelRecipients(self, group):
         return group.GetRecipients(self.__lastSentLevel)
-    
-#    def __GetPreviousLevelRecipients(self, group):
-#        return group.GetRecipients(self.__previousLevel)
             
     def __GetCurrentLevelRecipients(self, group):
         return group.GetRecipients(self.__currentLevel)
@@ -150,7 +147,6 @@ class GroupInstance:
         print "Shift Group Size: " + str(group.GetSize()) + " Current level: " + str(self.__currentLevel)
         if(group.GetSize() > self.__currentLevel + 1):
             self.__nextAction = datetime.utcnow() + timedelta(minutes = group.GetEscalateTime(self.__currentLevel))
-            self.__previousLevel = self.__currentLevel
             self.__currentLevel = self.__currentLevel + 1
         else:
             print 'Reached Max Level'
