@@ -18,8 +18,8 @@ class ClientTest(threading.Thread):
     def run(self):
         self.__currentCount = 0
         while(True):
-            self.__client.Alert(self.__currentCount, 'test', [1], 10)
-            time.sleep(5)
+            self.__client.Alert(self.__currentCount, 'test', [1, 2], 10)
+            time.sleep(150)
             self.__client.Suppress(self.__currentCount, datetime.utcnow() + timedelta(minutes = 1))
 #            self.__client.Alert(self.__currentCount+1, 'testing', [2], 10)
 #            self.__client.Alert(self.__currentCount+2, 'testing others', [1, 2], 10)

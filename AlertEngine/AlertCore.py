@@ -47,7 +47,7 @@ class AlertCore(threading.Thread):
         AlertCore.__eventQueue.append(ack)
     
     def Suppress(self, uniqueId, suppressTime):
-        print 'Supressed until: ' + str(suppressTime)
+        print 'Suppressed until: ' + str(suppressTime)
         suppress = SuppressItem(uniqueId, suppressTime)
         AlertCore.__eventQueue.append(suppress)
         

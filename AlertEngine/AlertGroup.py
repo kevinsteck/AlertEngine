@@ -126,6 +126,7 @@ class GroupInstance:
     
     def __init__(self, groupId):
         self.__groupId = groupId
+        self.__lastSentLevel = 0
         self.__previousLevel = 0
         self.__currentLevel = 0
         self.__nextAction = datetime.max
@@ -136,8 +137,11 @@ class GroupInstance:
     def NextActionTime(self):
         return self.__nextAction
     
-    def __GetPreviousLevelRecipients(self, group):
-        return group.GetRecipients(self.__previousLevel)
+    def __GetLastLevelRecipients(self, group):
+        return group.GetRecipients(self.__lastSentLevel)
+    
+#    def __GetPreviousLevelRecipients(self, group):
+#        return group.GetRecipients(self.__previousLevel)
             
     def __GetCurrentLevelRecipients(self, group):
         return group.GetRecipients(self.__currentLevel)
@@ -153,7 +157,11 @@ class GroupInstance:
             self.__nextAction = datetime.max
             
     def __RecalculateCurrentLevel(self, group):
-        self.__nextAction = datetime.utcnow() + timedelta(minutes = group.GetEscalateTime(self.__previousLevel))
+        if(group.GetSize() > self.__lastSentLevel + 1):
+            self.__nextAction = datetime.utcnow() + timedelta(minutes = group.GetEscalateTime(self.__lastSentLevel))
+        else:
+            print 'Reached Max Level... again!'
+            self.__nextAction = datetime.max
     
     def __SetNoAction(self):
         self.__nextAction = datetime.max
@@ -162,9 +170,8 @@ class GroupInstance:
         recipients = []
         group = GroupInstance.__grpCache.GetGroup(self.__groupId)
         if(group is not None):
-            recipients.extend(self.__GetPreviousLevelRecipients(group))
+            recipients.extend(self.__GetLastLevelRecipients(group))
             self.__RecalculateCurrentLevel(group)
-#            self.__ShiftLevelForward(group)
         print 'Next action time: ' + str(self.__nextAction)
         return recipients
             
@@ -175,9 +182,11 @@ class GroupInstance:
             if(group is not None):
                 if(alertType == 'alert' or alertType == 'escalate'):
                     recipients.extend(self.__GetCurrentLevelRecipients(group))
+                    self.__lastSentLevel = self.__currentLevel
                     self.__ShiftLevelForward(group)
                 if(alertType == 'ack' or alertType == 'suppress' or alertType == 'clear'):
-                    recipients.extend(self.__GetPreviousLevelRecipients(group))
+#                    recipients.extend(self.__GetPreviousLevelRecipients(group))
+                    recipients.extend(self.__GetLastLevelRecipients(group))
                     self.__SetNoAction()
         print 'Next action time: ' + str(self.__nextAction)
         return recipients
