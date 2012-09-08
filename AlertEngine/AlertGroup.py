@@ -151,9 +151,22 @@ class GroupInstance:
         else:
             print 'Reached Max Level'
             self.__nextAction = datetime.max
-        
+            
+    def __RecalculateCurrentLevel(self, group):
+        self.__nextAction = datetime.utcnow() + timedelta(minutes = group.GetEscalateTime(self.__previousLevel))
+    
     def __SetNoAction(self):
         self.__nextAction = datetime.max
+        
+    def GetSuppressionRecipients(self):
+        recipients = []
+        group = GroupInstance.__grpCache.GetGroup(self.__groupId)
+        if(group is not None):
+            recipients.extend(self.__GetPreviousLevelRecipients(group))
+            self.__RecalculateCurrentLevel(group)
+#            self.__ShiftLevelForward(group)
+        print 'Next action time: ' + str(self.__nextAction)
+        return recipients
             
     def GetRecipients(self, alertType):
         recipients = []

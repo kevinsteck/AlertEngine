@@ -46,8 +46,9 @@ class AlertCore(threading.Thread):
         ack = AckItem(uniqueId)
         AlertCore.__eventQueue.append(ack)
     
-    def Suppress(self, appId, uniqueId):
-        suppress = SuppressItem(uniqueId)
+    def Suppress(self, uniqueId, suppressTime):
+        print 'Supressed until: ' + str(suppressTime)
+        suppress = SuppressItem(uniqueId, suppressTime)
         AlertCore.__eventQueue.append(suppress)
         
     def Clear(self, uniqueId):
@@ -64,8 +65,9 @@ class AlertCore(threading.Thread):
     def ProcessAlertState():
         currentTime = datetime.utcnow()
         actionable = filter(lambda x: x.NextActionTime() < currentTime, AlertCore.__alertList.values())
+#        print 'Actionable items: ' + str(len(actionable))
         for a in actionable:
-            a.SendEscalate()
+            a.SendNextEvent()
         AlertCore.UpdateActionTime()
     
     @staticmethod

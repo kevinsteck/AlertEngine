@@ -15,6 +15,7 @@ class AlertInstance:
         self.__ttl = ttl
         self.__state = 'alert'
         self.__nextAction = datetime.max
+        self.__suppressTime = datetime.max
         for g in groupList:
             self.__groupInstanceList.append(GroupInstance(g))
         self.SendAlert()
@@ -41,14 +42,25 @@ class AlertInstance:
                 print 'Escalate: Would have sent to: ' + str(recipients)
                 #self.__SendMail(recipients, 'fill this in')              
             self.UpdateNextActionTime()
-        if(alertType == 'ack' or alertType == 'suppress' or alertType == 'clear'):
+        if(alertType == 'ack'  or alertType == 'clear'):
             for g in self.__groupInstanceList:
                 recipients = g.GetRecipients(alertType)
                 print 'Ack/Suppress/Clear: Would have sent to: ' + str(recipients)
                 #self.__SendMail(recipients, 'fill this in')
             self.__nextAction = datetime.max
-        
-#        print 'Next action time: ' + str(self.__nextAction)
+        if(alertType == 'suppress'):
+            for g in self.__groupInstanceList:
+                recipients = g.GetRecipients(alertType)
+                print 'Suppress: Would have sent to: ' + str(recipients)
+            print 'Suppress next time: ' + str(self.__suppressTime)
+            self.__nextAction = self.__suppressTime
+    
+    def __SendSuppressExpire(self):
+        for g in self.__groupInstanceList:
+            recipients = g.GetSuppressionRecipients()
+            print 'Suppression Expired: Would have sent to: ' + str(recipients)
+            self.__state = 'escalate'
+        self.UpdateNextActionTime()
         
     def UpdateNextActionTime(self):
         closestTime = datetime.max
@@ -60,8 +72,14 @@ class AlertInstance:
     def NextActionTime(self):
         return self.__nextAction
     
-    def SendEscalate(self):
-        self.__Send(self.__state)
+    def SendNextEvent(self):
+        #current state is suppressed so you can assume this is an expire
+        # this may get tricky once i add time profiles
+        print 'Sent next event: ' + str(self.__state)
+        if(not self.__state == 'suppress'):
+            self.__Send(self.__state)
+        else:
+            self.__SendSuppressExpire()
                 
     def SendAlert(self):
         self.__Send('alert')
@@ -71,7 +89,8 @@ class AlertInstance:
         self.__Send('ack')
         self.__state = 'ack'
     
-    def Suppress(self):
+    def Suppress(self, suppressTime):
+        self.__suppressTime = suppressTime
         self.__Send('suppress')
         self.__state = 'suppress'
     
@@ -119,12 +138,13 @@ class AckItem(Processable):
             alert.Ack()
     
 class SuppressItem(Processable):
-    def __init__(self, uniqueId):
+    def __init__(self, uniqueId, suppressTime):
         self.__uniqueId = uniqueId
+        self.__suppressTime = suppressTime
     def Process(self, alertList):
         if(alertList.has_key(self.__uniqueId)):
             alert = alertList[self.__uniqueId]
-            alert.Suppress()
+            alert.Suppress(self.__suppressTime)
     
 class ClearItem(Processable):
     def __init__(self, uniqueId):
