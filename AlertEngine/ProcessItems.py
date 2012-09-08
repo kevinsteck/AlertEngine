@@ -38,7 +38,7 @@ class AlertInstance:
             groups = self.__GetActionableGroups()
             for g in groups:
                 recipients = g.GetRecipients(alertType)
-                print 'Esclate: Would have sent to: ' + str(recipients)
+                print 'Escalate: Would have sent to: ' + str(recipients)
                 #self.__SendMail(recipients, 'fill this in')              
             self.UpdateNextActionTime()
         if(alertType == 'ack' or alertType == 'suppress' or alertType == 'clear'):
@@ -115,8 +115,8 @@ class AckItem(Processable):
         self.__uniqueId = uniqueId
     def Process(self, alertList):
         if(alertList.has_key(self.__uniqueId)):
-            alert = self.__alertList[self.__uniqueId]
-            alert.ack()
+            alert = alertList[self.__uniqueId]
+            alert.Ack()
     
 class SuppressItem(Processable):
     def __init__(self, uniqueId):
@@ -124,12 +124,14 @@ class SuppressItem(Processable):
     def Process(self, alertList):
         if(alertList.has_key(self.__uniqueId)):
             alert = alertList[self.__uniqueId]
-            alert.suppress()
+            alert.Suppress()
     
 class ClearItem(Processable):
     def __init__(self, uniqueId):
+        print uniqueId
         self.__uniqueId = uniqueId
     def Process(self, alertList):
+        print self.__uniqueId
         if(alertList.has_key(self.__uniqueId)):
-            alert = self.__alertList.pop(self.__uniqueId)
-            alert.clear()
+            alert = alertList.pop(self.__uniqueId)
+            alert.Clear()

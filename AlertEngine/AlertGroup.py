@@ -151,9 +151,7 @@ class GroupInstance:
         else:
             print 'Reached Max Level'
             self.__nextAction = datetime.max
-            
-        print 'Next action time: ' + str(self.__nextAction)
-            
+        
     def __SetNoAction(self):
         self.__nextAction = datetime.max
             
@@ -168,4 +166,5 @@ class GroupInstance:
                 if(alertType == 'ack' or alertType == 'suppress' or alertType == 'clear'):
                     recipients.extend(self.__GetPreviousLevelRecipients(group))
                     self.__SetNoAction()
+        print 'Next action time: ' + str(self.__nextAction)
         return recipients
