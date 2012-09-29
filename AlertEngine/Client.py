@@ -6,7 +6,9 @@ Created on Aug 19, 2012
 
 import xmlrpclib
 import threading
-import time
+#import time
+from datetime import timedelta
+from datetime import datetime
 
 class ClientTest(threading.Thread):
     def __init__(self):
@@ -25,4 +27,3 @@ class ClientTest(threading.Thread):
 #            time.sleep(140)
 #            self.__client.Ack(self.__currentCount)
             time.sleep(400)
-

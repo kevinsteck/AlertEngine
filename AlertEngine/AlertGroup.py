@@ -72,19 +72,19 @@ class GroupCache:
     def __BuildGroups(self):
         #just a test group
         newGroup = Group(1, True, True, True, True, True)
-        newGroup.AddLevel(0, 'kevinsteck@gmail.com', 1)
-        newGroup.AddLevel(1, 'kevinsteck@gmail.com', 1)
-        newGroup.AddLevel(2, 'kevinsteck@gmail.com', 1)
+        newGroup.AddLevel(0, 'x@gmail.com', 1)
+        newGroup.AddLevel(1, 'x@gmail.com', 1)
+        newGroup.AddLevel(2, 'x@gmail.com', 1)
         self.__AddGroup(newGroup)
         #another test group
         newGroup1 = Group(2, True, True, True, True, True)
-        newGroup1.AddLevel(0, 'kevinsteck@gmail.com', 2)
-        newGroup1.AddLevel(1, 'kevinsteck@gmail.com', 2)
-        newGroup1.AddLevel(2, 'kevinsteck@gmail.com', 2)
+        newGroup1.AddLevel(0, 'x@gmail.com', 2)
+        newGroup1.AddLevel(1, 'x@gmail.com', 2)
+        newGroup1.AddLevel(2, 'x@gmail.com', 2)
         self.__AddGroup(newGroup1)
         #another test
         newGroup1 = Group(3, True, True, True, True, True)
-        newGroup1.AddLevel(0, 'kevinsteck@gmail.com', 5)
+        newGroup1.AddLevel(0, 'x@gmail.com', 5)
         self.__AddGroup(newGroup1)
     
     def __AddGroup(self, group):
@@ -174,14 +174,13 @@ class GroupInstance:
     def GetRecipients(self, alertType):
         recipients = []
         group = GroupInstance.__grpCache.GetGroup(self.__groupId)
-        if(group.ShouldSend(alertType)):
-            if(group is not None):
+        if(group is not None):
+            if(group.ShouldSend(alertType)):
                 if(alertType == 'alert' or alertType == 'escalate'):
                     recipients.extend(self.__GetCurrentLevelRecipients(group))
                     self.__lastSentLevel = self.__currentLevel
                     self.__ShiftLevelForward(group)
                 if(alertType == 'ack' or alertType == 'suppress' or alertType == 'clear'):
-#                    recipients.extend(self.__GetPreviousLevelRecipients(group))
                     recipients.extend(self.__GetLastLevelRecipients(group))
                     self.__SetNoAction()
         print 'Next action time: ' + str(self.__nextAction)
